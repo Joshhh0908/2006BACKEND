@@ -8,9 +8,9 @@ class User {
         username: userData.username,
         email: userData.email,
         gender: userData.gender || '',
-        ageGroup: userData.ageGroup || '',
+        age: userData.age || '',
         occupation: userData.occupation || '',
-        preferredStyle: userData.preferredStyle || '',
+        preferredStyle: userData.style || '',
         createdAt: new Date()
       });
       return userData.uid;

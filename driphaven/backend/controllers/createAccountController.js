@@ -4,13 +4,17 @@ const User = require('../models/user');
 exports.register = async (req, res) => {
   console.log("Request Body: ", req.body)
   try {
-    const { uid, username, email } = req.body;
+    const { uid, username, email, gender, age, occupation, style } = req.body;
     
     // Create user document in Firestore
     const userId = await User.create(req.db, {
       uid,
       username,
-      email
+      email,
+      gender,
+      age,
+      occupation,
+      style,
     });
     
     res.status(201).json({
