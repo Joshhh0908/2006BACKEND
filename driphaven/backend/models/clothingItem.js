@@ -1,53 +1,48 @@
 // models/clothingItem.js
 class ClothingItem {
-    static collection = 'clothingItems';
+    static collection = 'users';
   
     static async getAll(db, userId) {
-      const snapshot = await db.collection(this.collection)
-        .where('userId', '==', userId)
-        .get();
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        lastWorn: doc.data().lastWorn ? doc.data().lastWorn.toDate() : null
-      }));
-    }
-  
-    static async getById(db, itemId, userId) {
-      const docRef = db.collection(this.collection).doc(itemId);
-      const doc = await docRef.get();
-      
-      if (!doc.exists) {
-        throw new Error('Clothing item not found');
+      try {
+        // Reference to the user's profile subcollection
+        const userDocRef = db.collection(this.collection).doc(userId);
+        const closetSubcollectionRef = userDocRef.collection("closet");
+        const snapshot = await closetSubcollectionRef.get();
+
+        if (snapshot.empty) {
+          return [];
+        }
+        // Map over the snapshot documents and format the data
+        return snapshot.docs.map(doc => ({
+          id: doc.id,  // Get the clothing item document ID
+          ...doc.data(),  // Spread the document fields (e.g., clothingType, size, etc.)
+          lastWorn: doc.data().lastWorn ? doc.data().lastWorn.toDate() : null,  // Convert Firestore timestamp to JavaScript Date
+          createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : null  // Convert Firestore timestamp to JavaScript Date (if exists)
+        }));
+      } catch (error) {
+        console.error('Error fetching closet items:', error);
+        throw new Error('Failed to fetch closet items');
       }
-      
-      const data = doc.data();
-      
-      if (data.userId !== userId) {
-        throw new Error('Unauthorized');
-      }
-      
-      return { 
-        id: doc.id, 
-        ...data,
-        lastWorn: data.lastWorn ? data.lastWorn.toDate() : null
-      };
     }
   
     static async create(db, itemData) {
-      const docRef = await db.collection(this.collection).add({
+      const docRef = db.collection(this.collection).doc(itemData.userId);
+      const closetSubcollection = docRef.collection("closet");
+    
+      const newItemRef = await closetSubcollection.add({
         ...itemData,
         lastWorn: new Date(),
         createdAt: new Date()
       });
       
-      return docRef.id;
+      return newItemRef.id;
     }
   
     static async update(db, itemId, itemData, userId) {
-      const docRef = db.collection(this.collection).doc(itemId);
-      const doc = await docRef.get();
+      const docRef = db.collection(this.collection).doc(userId);
+      const closetSubcollection = docRef.collection("closet");
+      const item = closetSubcollection.doc(itemId);
+      const doc = await item.get();
       
       if (!doc.exists) {
         throw new Error('Clothing item not found');
@@ -62,14 +57,16 @@ class ClothingItem {
         updatedAt: new Date()
       };
       
-      await docRef.update(updateData);
+      await item.update(updateData);
       return itemId;
     }
   
     static async delete(db, itemId, userId) {
-      const docRef = db.collection(this.collection).doc(itemId);
-      const doc = await docRef.get();
-      
+      const docRef = db.collection(this.collection).doc(userId);
+      const closetSubcollection = docRef.collection("closet");
+      const item = closetSubcollection.doc(itemId);
+      const doc = await item.get();
+  
       if (!doc.exists) {
         throw new Error('Clothing item not found');
       }
@@ -78,7 +75,7 @@ class ClothingItem {
         throw new Error('Unauthorized');
       }
       
-      await docRef.delete();
+      await item.delete();
       return itemId;
     }
   

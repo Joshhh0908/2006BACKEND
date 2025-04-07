@@ -21,9 +21,16 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.userId;
-    const profileData = req.body;
+    const { username, email, gender, ageGroup, occupation, preferredStyle } = req.body;
+    const profileData = {
+      username: username || '',        
+      gender: gender || '',     
+      ageGroup: ageGroup || '', 
+      occupation: occupation || '', 
+      preferredStyle: preferredStyle || '', 
+      updatedAt: new Date() 
+    };
     
-    // Update user data
     await User.update(req.db, userId, profileData);
     
     res.status(200).json({ 
