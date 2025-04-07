@@ -7,6 +7,7 @@ const closetController = require('../controllers/closetController');
 router.get('/', closetController.getAllItems);
 
 // GET /api/closet/unused
+//doesnt work for now... are we still doing this thing?
 router.get('/unused', closetController.getUnusedItems);
 
 // POST /api/closet

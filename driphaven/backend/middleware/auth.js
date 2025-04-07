@@ -2,7 +2,7 @@
 const { getAuth } = require('firebase-admin/auth');
 
 module.exports = async (req, res, next) => {
-  try {
+  /*try {
     // Extract token from authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -19,5 +19,8 @@ module.exports = async (req, res, next) => {
   } catch (error) {
     console.error('Auth Middleware Error:', error);
     res.status(401).json({ message: 'Authentication failed', error: error.message });
-  }
+  }*/
+    //uncomment out everything and comment out the below line to test auth token from front end
+    req.userId = '12345'
+    next();
 };

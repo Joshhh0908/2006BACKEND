@@ -1,17 +1,20 @@
-// routes/app.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
-const serviceAccount = require('../firebaseAdminKey.json');
+const admin = require('firebase-admin'); // Add this line to import admin
+
+
+const serviceAccount = require('../firebaseAdminKey.json');  // Path to your service account key
+console.log('Service Account:', serviceAccount);  // Log the service account to inspect its contents
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Firebase Admin
-initializeApp({
-  credential: cert(serviceAccount)
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
 });
 
 const db = getFirestore();
@@ -30,9 +33,7 @@ app.use((req, res, next) => {
 });
 
 // Import routes
-
 const loginRoutes = require('./routes/loginRoutes');
-
 const createAccountRoutes = require('./routes/createAccountRoutes');
 const homepageRoutes = require('./routes/homepageRoutes');
 const profilePageRoutes = require('./routes/profilePageRoutes');
@@ -45,14 +46,14 @@ const authMiddleware = require('./middleware/auth');
 
 // Routes
 app.use('/', loginRoutes);
-app.use('/api/register', createAccountRoutes);
+app.use('/createAccount', createAccountRoutes);
 
 // Protected routes
-app.use('/api/homepage', authMiddleware, homepageRoutes);
-app.use('/api/profile', authMiddleware, profilePageRoutes);
-app.use('/api/closet', authMiddleware, closetPageRoutes);
-app.use('/api/calendar', authMiddleware, calendarPageRoutes);
-app.use('/api/recommendations', authMiddleware, recoPageRoutes);
+app.use('/homepage', authMiddleware, homepageRoutes);
+app.use('/profile', authMiddleware, profilePageRoutes);
+app.use('/closet', authMiddleware, closetPageRoutes);
+app.use('/calendar', authMiddleware, calendarPageRoutes);
+app.use('/recommendations', authMiddleware, recoPageRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
