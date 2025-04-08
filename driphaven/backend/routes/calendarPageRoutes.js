@@ -7,6 +7,7 @@ const calendarController = require('../controllers/calendarController');
 router.get('/', calendarController.getAllEvents);
 
 // Get a specific event by ID
+//dunno if need... wont touch for now
 router.get('/:eventId', calendarController.getEvent);
 
 // Add a new event

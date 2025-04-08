@@ -1,60 +1,124 @@
 // models/event.js
+class Event {
+  static collection = 'users'; 
 
-const { getFirestore } = require('firebase-admin/firestore');
-const db = getFirestore(); // Assuming you're using Firestore
+  // Get all events for a user
+  static async getAll(db, userId) {
+    try {
+      const userDocRef = db.collection(this.collection).doc(userId);
+      const calendarSubcollectionRef = userDocRef.collection('calendar');
+      const snapshot = await calendarSubcollectionRef.get();
 
-// Get all events for a user
-const getAll = async (db, userId) => {
-  const eventsRef = db.collection('events').where('userId', '==', userId);
-  const snapshot = await eventsRef.get();
-  if (snapshot.empty) {
-    return []; // No events found
+      if (snapshot.empty) {
+        return []; // No events found
+      }
+
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(), // Spread the document fields (event name, date, etc.)
+        eventDate: doc.data().eventDate ? doc.data().eventDate.toDate() : null // Convert Firestore timestamp to JavaScript Date
+      }));
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      throw new Error('Failed to fetch calendar events');
+    }
   }
 
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
+  // Create a new event for a user
+  static async create(db, userId, eventData) {
+    try {
+      console.log("Creating event for user:", userId);
+      console.log("Event data:", eventData);
+  
+      // Reference to user's document and subcollection
+      const userDocRef = db.collection(this.collection).doc(userId);
+  
+      // Check if user document exists
+      const userDoc = await userDocRef.get();
+      if (!userDoc.exists) {
+        throw new Error(`User with ID ${userId} does not exist`);
+      }
+  
+      // Reference to the calendar subcollection
+      const calendarSubcollectionRef = userDocRef.collection('calendar');
+  
+      // Add new event to the calendar subcollection
+      const newEventRef = await calendarSubcollectionRef.add({
+        ...eventData,
+        createdAt: new Date()  
+      });
+  
+      console.log("Event created with ID:", newEventRef.id);
+      return newEventRef.id;
+    } catch (error) {
+      console.error('Error creating event:', error);
+      throw new Error('Failed to create event');
+    }
+  }
+  
 
-// Get a specific event by ID
-const getById = async (db, eventId, userId) => {
-  const eventRef = db.collection('events').doc(eventId);
-  const doc = await eventRef.get();
+  // Update an existing event
+  static async update(db, eventId, eventData, userId) {
+    try {
+      const userDocRef = db.collection(this.collection).doc(userId);
+      const calendarSubcollectionRef = userDocRef.collection('calendar');
+      const eventRef = calendarSubcollectionRef.doc(eventId);
+      const doc = await eventRef.get();
 
-  if (!doc.exists || doc.data().userId !== userId) {
-    throw new Error('Event not found or you do not have permission to access this event');
+      if (!doc.exists) {
+        throw new Error('Event not found');
+      }
+      await eventRef.update({
+        ...eventData,
+        updatedAt: new Date() 
+      });
+
+      return { id: eventId, ...eventData };  // Return the updated event data
+    } catch (error) {
+      console.error('Error updating event:', error);
+      throw new Error('Failed to update event');
+    }
   }
 
-  return { id: doc.id, ...doc.data() };
-};
+  // Delete an event
+  static async delete(db, eventId, userId) {
+    try {
+      const userDocRef = db.collection(this.collection).doc(userId);
+      const calendarSubcollectionRef = userDocRef.collection('calendar');
+      const eventRef = calendarSubcollectionRef.doc(eventId);
+      const doc = await eventRef.get();
 
-// Create a new event
-const create = async (db, eventData) => {
-  const eventRef = await db.collection('events').add(eventData);
-  return eventRef.id;
-};
-
-// Update an existing event
-const update = async (db, eventId, eventData, userId) => {
-  const eventRef = db.collection('events').doc(eventId);
-  const doc = await eventRef.get();
-
-  if (!doc.exists || doc.data().userId !== userId) {
-    throw new Error('Event not found or you do not have permission to update this event');
+      if (!doc.exists) {
+        throw new Error('Event not found');
+      }
+      await eventRef.delete();
+      return eventId;  // Return the deleted event's ID
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw new Error('Failed to delete event');
+    }
   }
 
-  await eventRef.update(eventData);
-  return { id: eventId, ...eventData };
-};
 
-// Delete an event
-const deleteEvent = async (db, eventId, userId) => {
-  const eventRef = db.collection('events').doc(eventId);
-  const doc = await eventRef.get();
+    // Get a specific event by ID
+    static async getById(db, eventId, userId) {
+      try {
+        const userDocRef = db.collection(this.collection).doc(userId);
+        const calendarSubcollectionRef = userDocRef.collection('calendar');
+        const eventRef = calendarSubcollectionRef.doc(eventId);
+        const doc = await eventRef.get();
+  
+        if (!doc.exists) {
+          throw new Error('Event not found');
+        }
+        return { id: doc.id, ...doc.data() };
+      } catch (error) {
+        console.error('Error fetching specific event:', error);
+        throw new Error('Failed to fetch event');
+      }
+    }
+}
 
-  if (!doc.exists || doc.data().userId !== userId) {
-    throw new Error('Event not found or you do not have permission to delete this event');
-  }
 
-  await eventRef.delete();
-};
 
-module.exports = { getAll, getById, create, update, deleteEvent };
+module.exports = Event;

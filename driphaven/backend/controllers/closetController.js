@@ -21,7 +21,7 @@ exports.addItem = async (req, res) => {
       ...req.body,
       userId
     };
-    const itemId = await ClothingItem.create(req.db, itemData);
+    const itemId = await ClothingItem.create(req.db, itemData, userId);
     res.status(201).json({ 
       success: true, 
       message: 'Item added successfully',
