@@ -25,10 +25,9 @@ class ClothingItem {
       }
     }
   
-    static async create(db, itemData) {
-      const docRef = db.collection(this.collection).doc(itemData.userId);
+    static async create(db, itemData, userId) {
+      const docRef = db.collection(this.collection).doc(userId);
       const closetSubcollection = docRef.collection("closet");
-    
       const newItemRef = await closetSubcollection.add({
         ...itemData,
         lastWorn: new Date(),
